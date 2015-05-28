@@ -1,0 +1,81 @@
+<project name="ant-examples" default="javascript-create-resources">
+
+    <property name="antlibs.dir" value="${basedir}/antlibs"/>
+
+    <!-- Check whether ant-contrib exists -->
+    <target name="-check-antlibs">
+        <condition property="antlibs-exists.flag">
+            <available file="${antlibs.dir}" type="dir"/>
+        </condition>
+    </target>
+
+    <!-- Download ant-contrib if it is not already available -->
+    <target name="-download-and-install-antlibs"
+            depends="-check-antlibs" unless="antlibs-exists.flag">
+        <mkdir dir="${antlibs.dir}"/>
+        <get src="http://ufpr.dl.sourceforge.net/project/ant-contrib/ant-contrib/1.0b3/ant-contrib-1.0b3-bin.zip"
+             dest="${antlibs.dir}" skipexisting="true"/>
+        <unzip dest="${antlibs.dir}">
+            <fileset dir="${antlibs.dir}">
+                <include name="*.zip"/>
+            </fileset>
+        </unzip>
+    </target>
+
+    <!-- It is little known, but you can actually download and activate
+         ant tasks, used by this very build.xml, on the fly. This is
+         possible by using a depends chain. -->
+    <target name="-init-antlibs" depends="-download-and-install-antlibs">
+        <taskdef resource="net/sf/antcontrib/antlib.xml">
+            <classpath>
+                <fileset dir="${basedir}/antlibs">
+                    <include name="**/*.jar"/>
+                </fileset>
+            </classpath>
+        </taskdef>
+    </target>
+
+    <target name="javascript-create-resources" depends="-init-antlibs">
+
+        <script language="javascript"><![CDATA[
+
+            // This is the same as:
+            //
+            //    <resources id="test">
+            //        <url url="http://www.google.com"/>
+            //        <url url="http://www.yahoo.com"/>
+            //        <url url="http://www.altavista.com"/>
+            //    </resources>
+            //
+            // Useful for exporting url lists from within embedded js.
+
+            // Create <resource id="search_engines">
+            var resources_example = project.createDataType ("resources");
+            project.addReference ("search_engines", resources_example);
+
+            // Add url <url url="bugabuga"/>
+            var url = new org.apache.tools.ant.types.resources.URLResource ();
+            url.setURL (new java.net.URL ("http://www.google.com"));
+            resources_example.add (url);
+
+            // Add url <url url="bugabuga"/>
+            var url = new org.apache.tools.ant.types.resources.URLResource ();
+            url.setURL (new java.net.URL ("http://www.yahoo.com"));
+            resources_example.add (url);
+
+            // Add url <url url="bugabuga"/>
+            var url = new org.apache.tools.ant.types.resources.URLResource ();
+            url.setURL (new java.net.URL ("http://www.altavista.com"));
+            resources_example.add (url);
+
+        ]]></script>
+
+        <!-- Now show what we've done, courtesy ant-contrib -->
+        <for param="var">
+            <resources refid="search_engines"/>
+            <sequential>
+                <echo message="@{var}"/>
+            </sequential>
+        </for>
+    </target>
+</project>
